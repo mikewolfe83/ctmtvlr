@@ -4,6 +4,8 @@
  * Every request for a private static asset passes through this Worker first.
  */
 const COOKIE = '__Host-ctm_studio';
+const CSRF_COOKIE = '__Host-ctm_csrf';
+const CSRF_SECONDS = 20 * 60;
 const SESSION_SECONDS = 8 * 60 * 60;
 const te = new TextEncoder();
 
@@ -30,7 +32,7 @@ function redirect(path, extras = {}) {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function loginPage(message = '') {
+function loginPage(message = '', csrf = '') {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <meta name="robots" content="noindex,nofollow"/>
@@ -39,7 +41,7 @@ function loginPage(message = '') {
   </head><body><main><div class="eyebrow">CTM MEDIA NETWORK / PRIVATE WORKSPACE</div>
   <h1>CREATOR <span style="color:#f0444d">STUDIO.</span></h1><p>Sign in to access the CTM podcast research dashboard.</p>
   ${message ? `<div class="error" role="alert">${escapeHtml(message)}</div>` : ''}
-  <form method="post" action="/login" autocomplete="on"><label for="u">USERNAME</label><input id="u" name="username" type="text" autocomplete="username" maxlength="120" required autofocus/>
+  <form method="post" action="/login" autocomplete="on"><input type="hidden" name="csrf" value="${escapeHtml(csrf)}"/><label for="u">USERNAME</label><input id="u" name="username" type="text" autocomplete="username" maxlength="120" required autofocus/>
   <label for="p">PASSWORD</label><input id="p" name="password" type="password" autocomplete="current-password" maxlength="512" required/>
   <button type="submit">SIGN IN ↗</button></form>
   <footer>Access restricted to authorized CTM team members.</footer></main></body></html>`;
@@ -68,7 +70,33 @@ async function validSession(req, env) {
     return body.u===env.STUDIO_USERNAME && Number.isSafeInteger(body.exp) && body.exp>Math.floor(Date.now()/1000);
   } catch { return false; }
 }
-function sameOrigin(request) { return request.headers.get('Origin') === new URL(request.url).origin; }
+// The browser Origin header can be absent or modified by privacy/proxy software.
+// Use a per-form CSRF token, stored in a Secure __Host- cookie, instead of
+// making successful logins depend on one specific browser header.
+function freshCsrf() {
+  const bytes = new Uint8Array(32);
+  crypto.getRandomValues(bytes);
+  return encode64(bytes);
+}
+function cookieValue(request, name) {
+  const prefix = `${name}=`;
+  return (request.headers.get('Cookie') || '').split(';').map(x => x.trim())
+    .find(x => x.startsWith(prefix))?.slice(prefix.length) || '';
+}
+function validCsrf(request, token) {
+  const fromCookie = cookieValue(request, CSRF_COOKIE);
+  const fromForm = String(token || '');
+  const tokenPattern = /^[A-Za-z0-9_-]{43}$/;
+  return tokenPattern.test(fromCookie) && tokenPattern.test(fromForm)
+    && equalBytes(te.encode(fromCookie), te.encode(fromForm));
+}
+function csrfCookieHeader(token, maxAge=CSRF_SECONDS) {
+  return `${CSRF_COOKIE}=${token}; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}`;
+}
+function serveLogin(message='', status=200) {
+  const token = freshCsrf();
+  return html(loginPage(message, token), status, {'Set-Cookie': csrfCookieHeader(token)});
+}
 function cookieHeader(value, maxAge=SESSION_SECONDS) { return `${COOKIE}=${value}; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}`; }
 
 export default {
@@ -81,29 +109,36 @@ export default {
     const route = url.pathname;
     if (route === '/login' && request.method === 'GET') {
       if (await validSession(request, env)) return redirect('/');
-      return html(loginPage());
+      return serveLogin();
     }
     if (route === '/login' && request.method === 'POST') {
-      if (!sameOrigin(request)) return html(loginPage('Your request could not be verified.'),403);
-      if (!(request.headers.get('Content-Type')||'').startsWith('application/x-www-form-urlencoded')) return html(loginPage('Please use the login form.'),415);
-      if (Number(request.headers.get('Content-Length')||0)>4096) return html(loginPage('Invalid login submission.'),413);
+      if (!(request.headers.get('Content-Type')||'').startsWith('application/x-www-form-urlencoded')) return serveLogin('Please use the login form.',415);
+      if (Number(request.headers.get('Content-Length')||0)>4096) return serveLogin('Invalid login submission.',413);
       const submitted = (await request.text()).slice(0,4097);
-      if (submitted.length>4096) return html(loginPage('Invalid login submission.'),413);
+      if (submitted.length>4096) return serveLogin('Invalid login submission.',413);
       const fields = new URLSearchParams(submitted);
+      if (!validCsrf(request, fields.get('csrf'))) return serveLogin('Login form expired or cookies are disabled. Reload this page and try again.',403);
       const username = fields.get('username') || '';
       const password = fields.get('password') || '';
-      if (username.length>120 || password.length>512) return html(loginPage('Invalid login submission.'),401);
+      if (username.length>120 || password.length>512) return serveLogin('Invalid login submission.',401);
       // Hash each side so comparison is constant-time. The password is a Worker secret, never in a static file.
       const [actual, wanted] = await Promise.all([
         sha256(`${username}\0${password}`),
         sha256(`${env.STUDIO_USERNAME}\0${env.STUDIO_PASSWORD}`)
       ]);
-      if(!equalBytes(actual,wanted)) return html(loginPage('Invalid username or password.'),401);
+      if(!equalBytes(actual,wanted)) return serveLogin('Invalid username or password.',401);
       const session=await makeSession(env);
       return redirect('/', {'Set-Cookie':cookieHeader(session)});
     }
     if (route === '/logout' && request.method === 'POST') {
-      if (!sameOrigin(request)) return new Response('Forbidden',{status:403,headers:securityHeaders});
+      if (!(request.headers.get('Content-Type')||'').startsWith('application/x-www-form-urlencoded')) {
+        return new Response('Forbidden',{status:403,headers:securityHeaders});
+      }
+      if (Number(request.headers.get('Content-Length')||0)>4096) return new Response('Forbidden',{status:403,headers:securityHeaders});
+      const submitted = (await request.text()).slice(0,4097);
+      if (submitted.length>4096 || !validCsrf(request,new URLSearchParams(submitted).get('csrf'))) {
+        return new Response('Forbidden',{status:403,headers:securityHeaders});
+      }
       return redirect('/login',{'Set-Cookie':cookieHeader('',0)});
     }
     if (request.method !== 'GET' && request.method !== 'HEAD') return new Response('Method Not Allowed',{status:405,headers:securityHeaders});
@@ -114,9 +149,15 @@ export default {
     if (isStudioDocument) {
       assetResponse=await env.ASSETS.fetch(new Request(new URL('/studio.html',url),request));
       if(assetResponse.ok && request.method==='GET') {
+        const csrf = freshCsrf();
         assetResponse=new HTMLRewriter().on('[data-public-home]', {
           element(el) { el.setAttribute('href', env.PUBLIC_SITE_URL || 'https://www.youtube.com/@ctmtvlr'); }
+        }).on('form[action="/logout"]', {
+          element(el) { el.append(`<input type="hidden" name="csrf" value="${csrf}">`,{html:true}); }
         }).transform(assetResponse);
+        const headers = new Headers(assetResponse.headers);
+        headers.append('Set-Cookie', csrfCookieHeader(csrf));
+        assetResponse = new Response(assetResponse.body,{status:assetResponse.status,headers});
       }
     } else if (route.startsWith('/assets/') || route==='/styles.css' || route==='/studio.js') {
       assetResponse=await env.ASSETS.fetch(request);
