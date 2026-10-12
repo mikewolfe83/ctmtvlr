@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#090b0f" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>CTM Creator Studio — Interactive UI Demo</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="studio.js" defer></script>
+</head>
+<body class="studio-page">
+  <a class="skip-link" href="#studio-main">Skip to content</a>
+  <header class="studio-header"><div class="studio-shell studio-top">
+    <a href="https://www.youtube.com/@ctmtvlr" data-public-home class="brand"><img src="assets/ctm-logo.png" alt="CTM logo" class="brand__logo" width="778" height="508" /><span class="brand__text">CREATOR <strong>STUDIO</strong></span></a>
+    <div class="studio-header__right"><span class="studio-tag">PRIVATE STUDIO / DEMO DATA</span><a class="studio-return" href="https://www.youtube.com/@ctmtvlr" data-public-home>← BACK TO SITE</a><form action="/logout" method="post" class="studio-logout"><button type="submit" class="studio-return">SIGN OUT ↗</button></form></div>
+  </div></header>
+  <main class="studio-shell" id="studio-main">
+    <div class="studio-intro"><div><div class="eyebrow"><span class="eyebrow__line"></span> CTM WORKSPACE / PROTOTYPE</div><h1>FIND IT. REFRAME IT.<br/><em>TALK ABOUT IT.</em></h1><p>Explore the concept for the private CTM Creator Studio: ranked topics, podcast-ready angles, and an editable episode rundown.</p></div><div class="demo-warning"><span aria-hidden="true">⚠</span><div><strong>DEMO MODE</strong><br/>All view counts and topics below are illustrative examples. Nothing is being fetched from YouTube, no AI API is connected, and this Studio interface is protected by a server-side login.</div></div></div>
+    <div class="studio-layout">
+      <section class="studio-panel" aria-labelledby="discover-label">
+        <div class="studio-panel__titlebar"><h2 id="discover-label">TOP VIDEO TOPICS</h2><small><span id="result-count">10</span> EXAMPLE RESULTS</small></div>
+        <div class="studio-form">
+          <label class="field"><span>SHOW</span><select id="studio-show"><option value="all">All categories</option><option value="thinking">Thinking Game</option><option value="sports">CTM Sports</option><option value="reactions">CTM Reactions</option></select></label>
+          <label class="field"><span>TIME WINDOW</span><select id="studio-period"><option value="720">Last 30 days</option><option value="168" selected>Last 7 days</option><option value="24">Last 24 hours</option></select></label>
+          <label class="field"><span>SEARCH TOPICS</span><input type="search" id="studio-search" placeholder="e.g. career, NFL..." /></label>
+        </div>
+        <div id="studio-list" class="studio-list" aria-live="polite"></div>
+      </section>
+      <aside class="studio-aside">
+        <section class="studio-panel" aria-labelledby="rewrite-label">
+          <div class="studio-panel__titlebar"><h2 id="rewrite-label">TOPIC REWRITER</h2><small>HANDCRAFTED DEMO</small></div>
+          <div class="studio-editor">
+            <div class="eyebrow"><span class="eyebrow__line"></span> PODCAST-READY ANGLE</div>
+            <div class="studio-editor__source" id="studio-source">Select a topic on the left to see a possible CTM angle.</div>
+            <label class="field"><span>PODCAST TITLE (EDITABLE)</span><textarea id="studio-title" maxlength="220" placeholder="Select a topic to begin..."></textarea></label>
+            <div class="field"><span>DISCUSSION QUESTIONS</span><ol class="studio-editor__questions" id="studio-questions"><li>Pick a demo topic to load questions.</li></ol></div>
+            <div class="studio-editor__buttons"><button class="btn btn--red" id="studio-add" type="button">+ ADD TO RUNDOWN</button><button class="btn btn--line" id="studio-copy-title" type="button">COPY TITLE ↗</button></div>
+          </div>
+          <div class="studio-help">The finished version can use YouTube Data API v3 for real rankings and a secure OpenAI API backend for fresh title rewrites. This protected preview demonstrates the interface and local planning flow only.</div>
+        </section>
+        <section class="studio-panel studio-agenda" aria-labelledby="agenda-label"><div class="studio-panel__titlebar"><h2 id="agenda-label">EPISODE RUNDOWN</h2><small><span id="agenda-count">0</span> SELECTED</small></div><div class="studio-agenda__list" id="studio-agenda"><p class="studio-empty">No topics saved yet. Add an idea from the rewriter.</p></div><div class="studio-agenda__footer"><button class="studio-mini-btn" type="button" id="agenda-copy">COPY AGENDA</button><button class="studio-mini-btn" type="button" id="agenda-download">DOWNLOAD .TXT</button><button class="studio-mini-btn studio-mini-btn--ghost" type="button" id="agenda-clear">CLEAR</button></div></section>
+      </aside>
+    </div>
+  </main>
+  <div role="status" id="studio-toast" class="studio-toast" hidden></div>
+</body>
+</html>

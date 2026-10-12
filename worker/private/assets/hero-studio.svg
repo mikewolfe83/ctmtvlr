@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 840" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#1E1620"/><stop offset=".5" stop-color="#0A0D16"/><stop offset="1" stop-color="#180B10"/></linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(580 310) rotate(90) scale(470 510)"><stop stop-color="#E52A3C" stop-opacity=".61"/><stop offset=".55" stop-color="#8B1C3B" stop-opacity=".22"/><stop offset="1" stop-color="#E52A3C" stop-opacity="0"/></radialGradient>
+    <radialGradient id="gold" cx="0" cy="0" r="1" gradientTransform="translate(770 645) rotate(90) scale(270 300)"><stop stop-color="#E7A755" stop-opacity=".33"/><stop offset="1" stop-color="#E7A755" stop-opacity="0"/></radialGradient>
+    <linearGradient id="mic" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7C7C8B"/><stop offset=".2" stop-color="#242730"/><stop offset=".53" stop-color="#444954"/><stop offset="1" stop-color="#090C14"/></linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#85838E"/><stop offset=".2" stop-color="#252831"/><stop offset=".65" stop-color="#10151C"/><stop offset="1" stop-color="#65636B"/></linearGradient>
+    <linearGradient id="arm" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#4E4E5C"/><stop offset=".5" stop-color="#0B0B11"/><stop offset="1" stop-color="#4E4E5C"/></linearGradient>
+    <pattern id="mesh" patternUnits="userSpaceOnUse" width="8" height="8"><path d="M0 0H8M0 0V8" stroke="#05070B" stroke-width="1.5"/><circle cx="4" cy="4" r="1.2" fill="#AFADB5" opacity=".48"/></pattern>
+    <pattern id="grid" width="56" height="56" patternUnits="userSpaceOnUse"><path d="M56 0H0V56" stroke="#fff" stroke-opacity=".045"/></pattern>
+    <filter id="blur"><feGaussianBlur stdDeviation="32"/></filter>
+    <filter id="shadow"><feDropShadow dx="14" dy="22" stdDeviation="26" flood-color="#000" flood-opacity=".7"/></filter>
+  </defs>
+  <rect width="1000" height="840" fill="url(#bg)"/>
+  <rect width="1000" height="840" fill="url(#grid)"/>
+  <circle cx="580" cy="310" r="440" fill="url(#glow)"/><ellipse cx="770" cy="645" rx="300" ry="250" fill="url(#gold)"/>
+  <path d="M83 0v840M181 0v840M900 0v840" stroke="#F24150" stroke-opacity=".11" stroke-width="3"/>
+  <path d="M0 642C200 568 335 600 506 654S852 730 1000 617" stroke="#F35E5A" stroke-opacity=".22" stroke-width="2"/>
+  <circle cx="560" cy="402" r="295" stroke="#E53242" stroke-opacity=".19" stroke-width="1.5"/><circle cx="560" cy="402" r="345" stroke="#E53242" stroke-opacity=".12" stroke-width="1.5"/>
+  <circle cx="560" cy="402" r="232" stroke="#E53242" stroke-opacity=".16" stroke-width="2"/>
+  <g opacity=".19" fill="#fff"><text x="77" y="690" font-family="Arial, sans-serif" font-size="210" font-weight="900" letter-spacing="-14">TGP</text></g>
+  <g filter="url(#shadow)" transform="rotate(-23 570 407)">
+    <path d="M583 538 L758 772" stroke="#06080D" stroke-width="33" stroke-linecap="round"/>
+    <path d="M583 538 L758 772" stroke="url(#arm)" stroke-width="24" stroke-linecap="round"/>
+    <path d="M758 772 L910 794" stroke="#090A10" stroke-width="27" stroke-linecap="round"/>
+    <path d="M758 772 L910 794" stroke="url(#arm)" stroke-width="17" stroke-linecap="round"/>
+    <circle cx="583" cy="538" r="28" fill="#151821" stroke="#6B6773" stroke-width="5"/>
+    <circle cx="758" cy="772" r="18" fill="#12121A" stroke="#5A5D69" stroke-width="4"/>
+    <rect x="433" y="348" width="221" height="245" rx="58" fill="url(#body)" stroke="#77717B" stroke-width="5"/>
+    <rect x="451" y="165" width="183" height="290" rx="85" fill="url(#mic)" stroke="#AFA6AE" stroke-width="7"/>
+    <rect x="464" y="180" width="158" height="259" rx="75" fill="url(#mesh)" opacity=".97"/>
+    <path d="M466 273H621M467 305H620M469 337H618" stroke="#DAD5DC" stroke-opacity=".23" stroke-width="5"/>
+    <rect x="487" y="449" width="110" height="103" rx="22" fill="#191C24" stroke="#8B818C" stroke-width="4"/>
+    <path d="M495 482H590M495 500H590M495 518H590" stroke="#6E717D" stroke-width="2"/>
+    <rect x="468" y="551" width="155" height="18" rx="9" fill="#11141B" stroke="#757079" stroke-width="4"/>
+    <path d="M433 468 C385 495 384 575 442 611" stroke="#9C9AA3" stroke-width="16" stroke-linecap="round"/>
+    <path d="M655 469 C695 500 694 573 649 607" stroke="#A5A0AA" stroke-width="16" stroke-linecap="round"/>
+    <circle cx="541" cy="395" r="190" fill="#E62B48" opacity=".075" filter="url(#blur)"/>
+  </g>
+  <g transform="translate(80 77)"><rect width="169" height="40" rx="20" fill="#EC293B"/><circle cx="23" cy="20" r="6" fill="#fff"/><text x="39" y="26" font-family="Arial, sans-serif" font-weight="700" font-size="16" fill="white" letter-spacing="2">ON THE AIR</text></g>
+  <g opacity=".85"><path d="M97 765H900" stroke="white" stroke-opacity=".2"/><text x="100" y="800" font-family="Arial, sans-serif" font-size="15" font-weight="bold" letter-spacing="5" fill="#E6C7BA">ORIGINAL VOICES • REAL CONVERSATIONS</text></g>
+</svg>
