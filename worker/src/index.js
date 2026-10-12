@@ -36,7 +36,7 @@ function loginPage(message = '', csrf = '') {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <meta name="robots" content="noindex,nofollow"/>
-  <title>CTM Creator Studio — Sign In</title>
+  <title>CTM Creator Studio — Sign In</title><link rel="icon" href="data:,"/>
   <style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 15% 0%,#28151c,#090b0f 60%);color:#fff;font:16px/1.55 system-ui,"Segoe UI",Arial,sans-serif}main{width:min(440px,calc(100% - 32px));background:#13161d;border:1px solid #37373e;padding:38px;box-shadow:0 28px 65px #0008}.eyebrow{font-size:11px;letter-spacing:2px;color:#f0444d;font-weight:800}h1{font-size:40px;letter-spacing:-1.8px;line-height:1.1;margin:10px 0}p{color:#a6a7b0;font-size:13px;margin-bottom:26px}label{display:block;margin:14px 0 5px;font-size:11px;letter-spacing:1px;font-weight:800;color:#bbb}input{width:100%;padding:13px 14px;background:#090b0f;border:1px solid #5b5962;color:#fff;font-size:15px;border-radius:0}input:focus{outline:2px solid #f0444d;outline-offset:1px}button{width:100%;background:#e23542;color:#fff;font-weight:900;letter-spacing:1px;border:0;padding:15px;margin-top:23px;cursor:pointer}button:hover{background:#c72232}.error{background:#38181d;border:1px solid #a13c4a;color:#ffbdc3;padding:10px;font-size:13px}footer{margin-top:24px;color:#85858d;font-size:11px;text-align:center}a{color:#d7d7dc}</style>
   </head><body><main><div class="eyebrow">CTM MEDIA NETWORK / PRIVATE WORKSPACE</div>
   <h1>CREATOR <span style="color:#f0444d">STUDIO.</span></h1><p>Sign in to access the CTM podcast research dashboard.</p>
@@ -93,8 +93,12 @@ function validCsrf(request, token) {
 function csrfCookieHeader(token, maxAge=CSRF_SECONDS) {
   return `${CSRF_COOKIE}=${token}; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age=${maxAge}`;
 }
-function serveLogin(message='', status=200) {
-  const token = freshCsrf();
+// Reuse an existing CSRF cookie when the login page is requested again.
+// Otherwise a background browser request that redirects to /login could replace
+// the cookie while the first login form still contains the previous token.
+function serveLogin(request, message='', status=200) {
+  const existing = cookieValue(request, CSRF_COOKIE);
+  const token = /^[A-Za-z0-9_-]{43}$/.test(existing) ? existing : freshCsrf();
   return html(loginPage(message, token), status, {'Set-Cookie': csrfCookieHeader(token)});
 }
 function cookieHeader(value, maxAge=SESSION_SECONDS) { return `${COOKIE}=${value}; Secure; HttpOnly; SameSite=Lax; Path=/; Max-Age=${maxAge}`; }
@@ -107,26 +111,30 @@ export default {
     }
     const url = new URL(request.url);
     const route = url.pathname;
+    // Browser favicon requests must not trigger a fresh login page/token.
+    if (route === '/favicon.ico' && (request.method === 'GET' || request.method === 'HEAD')) {
+      return new Response(null, {status:204,headers:securityHeaders});
+    }
     if (route === '/login' && request.method === 'GET') {
       if (await validSession(request, env)) return redirect('/');
-      return serveLogin();
+      return serveLogin(request);
     }
     if (route === '/login' && request.method === 'POST') {
-      if (!(request.headers.get('Content-Type')||'').startsWith('application/x-www-form-urlencoded')) return serveLogin('Please use the login form.',415);
-      if (Number(request.headers.get('Content-Length')||0)>4096) return serveLogin('Invalid login submission.',413);
+      if (!(request.headers.get('Content-Type')||'').startsWith('application/x-www-form-urlencoded')) return serveLogin(request,'Please use the login form.',415);
+      if (Number(request.headers.get('Content-Length')||0)>4096) return serveLogin(request,'Invalid login submission.',413);
       const submitted = (await request.text()).slice(0,4097);
-      if (submitted.length>4096) return serveLogin('Invalid login submission.',413);
+      if (submitted.length>4096) return serveLogin(request,'Invalid login submission.',413);
       const fields = new URLSearchParams(submitted);
-      if (!validCsrf(request, fields.get('csrf'))) return serveLogin('Login form expired or cookies are disabled. Reload this page and try again.',403);
+      if (!validCsrf(request, fields.get('csrf'))) return serveLogin(request,'Login form expired or cookies are disabled. Reload this page and try again.',403);
       const username = fields.get('username') || '';
       const password = fields.get('password') || '';
-      if (username.length>120 || password.length>512) return serveLogin('Invalid login submission.',401);
+      if (username.length>120 || password.length>512) return serveLogin(request,'Invalid login submission.',401);
       // Hash each side so comparison is constant-time. The password is a Worker secret, never in a static file.
       const [actual, wanted] = await Promise.all([
         sha256(`${username}\0${password}`),
         sha256(`${env.STUDIO_USERNAME}\0${env.STUDIO_PASSWORD}`)
       ]);
-      if(!equalBytes(actual,wanted)) return serveLogin('Invalid username or password.',401);
+      if(!equalBytes(actual,wanted)) return serveLogin(request,'Invalid username or password.',401);
       const session=await makeSession(env);
       return redirect('/', {'Set-Cookie':cookieHeader(session)});
     }

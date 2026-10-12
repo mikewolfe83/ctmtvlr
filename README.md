@@ -101,4 +101,4 @@ You can keep updating your CTM website by pushing changes to GitHub. Public chan
 - first initial post 10/11/2026
 
  https://ctm-creator-studio.ctmlr.workers.dev
-Current Version ID: a6e2c3ec-5d75-4ab2-83ca-690cb7d8d40c
+Current Version ID: 12fc9a52-be8f-4475-97d4-8152f6af5e08
