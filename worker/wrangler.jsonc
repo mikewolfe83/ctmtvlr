@@ -11,6 +11,6 @@
     "run_worker_first": true
   },
   "vars": {
-    "PUBLIC_SITE_URL": "https://www.youtube.com/@ctmtvlr"
+    "PUBLIC_SITE_URL": "https://www.ctmlr.com"
   }
 }
